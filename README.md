@@ -100,26 +100,29 @@ docker run -p 8080:8080 \
   scantrack-node
 ```
 
-### Steg 4 — Pusha till ACR och deploya på ACI
+### Steg 4 — Sätt upp GitHub Actions-pipeline
 
+Deployment sker via CI/CD — **inga manuella `docker push` eller `az container create`**.
+Miljövariablerna får aldrig ligga i koden. De lever i GitHub Secrets och injiceras av pipeline.
+
+**Secrets att sätta under Settings → Secrets and variables → Actions:**
+
+| Secret | Vad det är |
+|--------|-----------|
+| `ACR_LOGIN_SERVER` | `<ditt-register>.azurecr.io` |
+| `ACR_USERNAME` | Användarnamn till ACR |
+| `ACR_PASSWORD` | Lösenord till ACR |
+| `AZURE_CREDENTIALS` | JSON från `az ad sp create-for-rbac` |
+| `CITY_NAME` | Er stads namn (t.ex. `Göteborg`) |
+| `NODE_URL` | Er nods publika URL när den är uppe |
+| `REGISTRY_URL` | URL till ScanTrack-registret (delas ut av läraren) |
+
+Öppna `.github/workflows/deploy.yml`. Fyll i alla `# ???`-ställen.
+När du pushar till `main` ska pipeline köra och noden hamna i ACI automatiskt.
+
+Verifiera att det fungerade:
 ```bash
-# Logga in
-az acr login --name <ditt-register>
-
-# Tagga och pusha
-docker tag scantrack-node <ditt-register>.azurecr.io/scantrack-node:v1
-docker push <ditt-register>.azurecr.io/scantrack-node:v1
-
-# Starta på ACI
-az container create \
-  --resource-group <din-rg> \
-  --name scantrack-<din-stad> \
-  --image <ditt-register>.azurecr.io/scantrack-node:v1 \
-  --ports 8080 \
-  --environment-variables \
-    CITY_NAME=<din-stad> \
-    NODE_URL=<din-publika-url> \
-    REGISTRY_URL=<url från läraren>
+az container show --name scantrack-<din-stad> --resource-group <din-rg> --query instanceView.state
 ```
 
 ### Steg 5 — Skicka ett paket
