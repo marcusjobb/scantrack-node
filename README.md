@@ -51,7 +51,7 @@ Tre variabler måste sättas när noden startas:
 | Variabel | Exempel | Beskrivning |
 |----------|---------|-------------|
 | `CITY_NAME` | `Göteborg` | Er stads namn (måste matcha cities.csv) |
-| `NODE_URL` | `https://scantrack-goteborg.azurecontainer.io` | Er nods publika URL |
+| `NODE_URL` | `http://20.100.x.x:8080` | Er nods publika URL (IP från ACI) |
 | `REGISTRY_URL` | *(delas ut av läraren)* | Centralt register för alla noder |
 
 ---
@@ -71,6 +71,7 @@ Tre variabler måste sättas när noden startas:
 ## Din uppgift
 
 ### Steg 1 — Förstå koden
+
 Läs igenom projektet. Testa att köra det lokalt:
 
 ```bash
@@ -78,7 +79,7 @@ cd ScanTrackNode
 dotnet run
 ```
 
-Öppna `http://localhost:5000/swagger` och testa `/route?from=Göteborg&to=Umeå`.
+Öppna `http://localhost:5000/swagger` och testa `/route?from=Linköping&to=Stockholm`.
 
 ### Steg 2 — Implementera `ForwardAsync`
 
@@ -105,37 +106,52 @@ docker run -p 8080:8080 \
 
 Tips i Dockerfile: kopiera CSV-filen från repo-roten med `COPY data/ /data/`
 
-### Steg 4 — Sätt upp GitHub Actions-pipeline
+### Steg 4 — Deploya till Azure
 
-Deployment sker via CI/CD — **inga manuella `docker push` eller `az container create`**.
-Miljövariablerna får aldrig ligga i koden. De lever i GitHub Secrets och injiceras av pipeline.
-
-**Secrets att sätta under Settings → Secrets and variables → Actions:**
-
-| Secret | Vad det är |
-|--------|-----------|
-| `ACR_LOGIN_SERVER` | `<ditt-register>.azurecr.io` |
-| `ACR_USERNAME` | Användarnamn till ACR |
-| `ACR_PASSWORD` | Lösenord till ACR |
-| `AZURE_CREDENTIALS` | JSON från `az ad sp create-for-rbac` |
-| `CITY_NAME` | Er stads namn (t.ex. `Göteborg`) |
-| `NODE_URL` | Er nods publika URL när den är uppe |
-| `REGISTRY_URL` | URL till ScanTrack-registret (delas ut av läraren) |
-
-Öppna `.github/workflows/deploy.yml`. Fyll i alla `# ???`-ställen.
-När du pushar till `main` ska pipeline köra och noden hamna i ACI automatiskt.
-
-Verifiera att det fungerade:
 ```bash
-az container show --name scantrack-<din-stad> --resource-group <din-rg> --query instanceView.state
+# Skapa resource group och container registry
+az group create --name rg-scantrack-[dittnamn] --location northeurope
+
+az acr create \
+  --name acrscantrack[dittnamn] \
+  --resource-group rg-scantrack-[dittnamn] \
+  --sku Basic \
+  --admin-enabled true
+
+# Logga in mot ACR och pusha imagen
+az acr login --name acrscantrack[dittnamn]
+
+docker tag scantrack-node acrscantrack[dittnamn].azurecr.io/scantrack-node:v1
+docker push acrscantrack[dittnamn].azurecr.io/scantrack-node:v1
+
+# Hämta ACR-lösenord och starta noden
+ACR_PASSWORD=$(az acr credential show \
+  --name acrscantrack[dittnamn] \
+  --query "passwords[0].value" -o tsv)
+
+az container create \
+  --name scantrack-<er-stad> \
+  --resource-group rg-scantrack-[dittnamn] \
+  --image acrscantrack[dittnamn].azurecr.io/scantrack-node:v1 \
+  --ports 8080 \
+  --ip-address Public \
+  --registry-login-server acrscantrack[dittnamn].azurecr.io \
+  --registry-username acrscantrack[dittnamn] \
+  --registry-password "$ACR_PASSWORD" \
+  --environment-variables \
+    CITY_NAME=<er-stad> \
+    NODE_URL=http://<er-ip>:8080 \
+    REGISTRY_URL=<url från läraren>
 ```
+
+> **Tips:** Skapa noden utan `NODE_URL` först, hämta IP-adressen med `az container show --query ipAddress.ip -o tsv`, ta sedan bort och skapa om med rätt IP.
 
 ### Steg 5 — Skicka ett paket
 
 När alla grupper är uppe — skicka ett paket och se det röra sig genom Sverige:
 
 ```bash
-curl -X POST https://<din-url>/paket \
+curl -X POST http://<er-ip>:8080/paket \
   -H "Content-Type: application/json" \
   -d '{
     "destination": "Umeå",
@@ -145,8 +161,9 @@ curl -X POST https://<din-url>/paket \
 ```
 
 Titta på loggarna:
+
 ```bash
-az container logs --name scantrack-<din-stad> --resource-group <din-rg> --follow
+az container logs --name scantrack-<er-stad> --resource-group rg-scantrack-[dittnamn] --follow
 ```
 
 ---
@@ -175,3 +192,9 @@ az container logs --name scantrack-<din-stad> --resource-group <din-rg> --follow
 - Skärmbild: ett paket som passerat er nod (syns i loggarna)
 
 Deadline: *(sätts av läraren)*
+
+---
+
+## Nästa vecka (v38)
+
+Filen `.github/workflows/deploy.yml` innehåller ett skelett för CI/CD. I v38 automatiserar ni denna deploy — sparade kommandon från v36 är bra att ha till hands.
