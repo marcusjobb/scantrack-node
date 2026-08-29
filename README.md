@@ -88,17 +88,22 @@ Testa lokalt innan du går vidare.
 
 ### Steg 3 — Skriv Dockerfile
 
-Öppna `Dockerfile`. Fyll i de saknade raderna (multi-stage build — se föreläsningen).
+Öppna `ScanTrackNode/Dockerfile`. Fyll i de saknade raderna (multi-stage build — se föreläsningen).
 
-Bygg och testa lokalt:
+> **OBS:** Bygg från **repo-roten**, inte inifrån `ScanTrackNode/`. Annars hittas inte `data/cities.csv`.
+
 ```bash
-docker build -t scantrack-node .
+# Stå i repo-roten (där README.md och data/ finns)
+docker build -f ScanTrackNode/Dockerfile -t scantrack-node .
+
 docker run -p 8080:8080 \
   -e CITY_NAME=Göteborg \
   -e NODE_URL=http://localhost:8080 \
   -e REGISTRY_URL=<url från läraren> \
   scantrack-node
 ```
+
+Tips i Dockerfile: kopiera CSV-filen från repo-roten med `COPY data/ /data/`
 
 ### Steg 4 — Sätt upp GitHub Actions-pipeline
 
