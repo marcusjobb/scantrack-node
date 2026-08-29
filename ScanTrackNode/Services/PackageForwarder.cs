@@ -7,33 +7,29 @@ namespace ScanTrackNode.Services;
 public class PackageForwarder
 {
     private readonly NodeRegistry _registry;
-    private readonly HttpClient _http;
+    private readonly IHttpClientFactory _factory;
     private readonly ILogger<PackageForwarder> _logger;
 
-    public PackageForwarder(NodeRegistry registry, HttpClient http, ILogger<PackageForwarder> logger)
+    public PackageForwarder(NodeRegistry registry, IHttpClientFactory factory, ILogger<PackageForwarder> logger)
     {
         _registry = registry;
-        _http = http;
+        _factory = factory;
         _logger = logger;
     }
 
     // DIN UPPGIFT: Vidarebefordra paketet till nästa nod i nätverket.
     //
     // Steg för steg:
-    //   1. Hämta nodlistan från _registry.GetNodesAsync()
-    //   2. Slå upp URL:en för 'nextCity' i listan
-    //      - Om staden inte finns: logga ett fel och returnera false
-    //   3. Serialisera 'package' till JSON
-    //   4. Skicka en POST-request till {url}/paket
-    //   5. Logga att du skickade vidare (stad + packageId)
-    //   6. Returnera true om HTTP-svaret var lyckat (2xx), annars false
-    //
-    // Hjälpmedel:
-    //   _logger.LogInformation("...", ...)   → loggar ett meddelande
-    //   JsonSerializer.Serialize(package)    → konverterar objektet till JSON-sträng
-    //   new StringContent(json, Encoding.UTF8, "application/json")  → HTTP-body
-    //   await _http.PostAsync(url, content)  → skickar POST-request
-    //   response.IsSuccessStatusCode         → true om 200–299
+    //   1. Hämta nodlistan: await _registry.GetNodesAsync()
+    //      → returnerar Dictionary<string, string>  (stad → url)
+    //   2. Slå upp URL:en för 'nextCity'
+    //      → om staden inte finns: logga fel och returnera false
+    //   3. Serialisera 'package' till JSON: JsonSerializer.Serialize(package)
+    //   4. Skapa HTTP-body: new StringContent(json, Encoding.UTF8, "application/json")
+    //   5. Skapa en HttpClient: _factory.CreateClient()
+    //   6. Skicka: await http.PostAsync($"{url}/paket", content)
+    //   7. Logga att du skickade (stad + packageId): _logger.LogInformation(...)
+    //   8. Returnera response.IsSuccessStatusCode
     public async Task<bool> ForwardAsync(Package package, string nextCity)
     {
         // TODO: implementera vidarebefordran
