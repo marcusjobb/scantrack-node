@@ -11,10 +11,19 @@ public class DijkstraService
 
     // Returnerar nästa hopp på kortaste vägen från 'from' till 'to'.
     // Städer i 'visited' hoppas över för att undvika loopar.
-    // Returnerar null om ingen väg finns.
-    public string? NextHop(string from, string to, IEnumerable<string> visited)
+    // 'onlineNodes' begränsar vilka städer som får användas som mellansteg
+    // — saknas en stad i registret ignoreras den helt enkelt.
+    // Returnerar null om ingen väg finns med tillgängliga noder.
+    public string? NextHop(
+        string from,
+        string to,
+        IEnumerable<string> visited,
+        IEnumerable<string>? onlineNodes = null)
     {
         var skip = new HashSet<string>(visited, StringComparer.OrdinalIgnoreCase);
+        var online = onlineNodes != null
+            ? new HashSet<string>(onlineNodes, StringComparer.OrdinalIgnoreCase)
+            : null;
 
         var dist = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var prev = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -38,10 +47,13 @@ public class DijkstraService
 
             foreach (var (neighbor, weight) in neighbors)
             {
-                // Tillåt alltid destinationen, hoppa över övriga besökta
-                if (skip.Contains(neighbor) &&
-                    !string.Equals(neighbor, to, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                var isDestination = string.Equals(neighbor, to, StringComparison.OrdinalIgnoreCase);
+
+                // Hoppa över besökta städer
+                if (skip.Contains(neighbor) && !isDestination) continue;
+
+                // Hoppa över städer som inte är online (mellansteg måste vara registrerade)
+                if (!isDestination && online != null && !online.Contains(neighbor)) continue;
 
                 var newDist = dist[current] + weight;
                 if (newDist < dist.GetValueOrDefault(neighbor, int.MaxValue))
@@ -56,7 +68,6 @@ public class DijkstraService
         if (!prev.ContainsKey(to))
             return null;
 
-        // Gå bakåt från 'to' tills vi är ett steg från 'from'
         var node = to;
         while (prev.TryGetValue(node, out var parent) &&
                !string.Equals(parent, from, StringComparison.OrdinalIgnoreCase))
@@ -67,22 +78,22 @@ public class DijkstraService
         return node;
     }
 
-    // Returnerar hela rutten som en lista, inklusive start och mål.
-    public List<string> FullRoute(string from, string to, IEnumerable<string> visited)
+    // Returnerar hela rutten som lista, med hänsyn till online-noder.
+    public List<string> FullRoute(
+        string from,
+        string to,
+        IEnumerable<string> visited,
+        IEnumerable<string>? onlineNodes = null)
     {
-        var route = new List<string>();
-        var skip = new HashSet<string>(visited, StringComparer.OrdinalIgnoreCase);
-
+        var route = new List<string> { from };
         var current = from;
-        route.Add(current);
 
         for (var i = 0; i < _graph.Count; i++)
         {
-            var next = NextHop(current, to, skip.Union(route));
+            var next = NextHop(current, to, route, onlineNodes);
             if (next == null) break;
             route.Add(next);
-            if (string.Equals(next, to, StringComparison.OrdinalIgnoreCase))
-                break;
+            if (string.Equals(next, to, StringComparison.OrdinalIgnoreCase)) break;
             current = next;
         }
 
