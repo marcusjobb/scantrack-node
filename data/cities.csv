@@ -1,0 +1,16 @@
+from,to,km
+Göteborg,Malmö,280
+Göteborg,Jönköping,160
+Malmö,Jönköping,190
+Malmö,Linköping,270
+Jönköping,Linköping,120
+Jönköping,Stockholm,320
+Linköping,Norrköping,45
+Linköping,Stockholm,200
+Norrköping,Stockholm,165
+Stockholm,Örebro,200
+Stockholm,Gävle,180
+Stockholm,Sundsvall,390
+Örebro,Gävle,250
+Gävle,Sundsvall,230
+Sundsvall,Umeå,250
