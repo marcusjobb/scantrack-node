@@ -178,10 +178,13 @@ az container logs --name scantrack-<er-stad> --resource-group rg-scantrack-[ditt
 | Linköping | Grupp 4 |
 | Norrköping | Grupp 5 |
 | Stockholm | Grupp 6 |
-| Örebro | Grupp 7 |
-| Gävle | Grupp 8 |
-| Sundsvall | Grupp 9 |
-| Umeå | Grupp 10 |
+| Uppsala | Grupp 7 |
+| Västerås | Grupp 8 |
+| Örebro | Grupp 9 |
+| Gävle | Grupp 10 |
+| Sundsvall | Grupp 11 |
+| Östersund | Grupp 12 |
+| Umeå | Grupp 13 |
 
 ---
 
