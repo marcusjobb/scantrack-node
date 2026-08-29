@@ -172,19 +172,29 @@ az container logs --name scantrack-<er-stad> --resource-group rg-scantrack-[ditt
 
 | Stad | Grupp |
 |------|-------|
-| Göteborg | Grupp 1 |
+| Helsingborg | Grupp 1 |
 | Malmö | Grupp 2 |
-| Jönköping | Grupp 3 |
-| Linköping | Grupp 4 |
-| Norrköping | Grupp 5 |
-| Stockholm | Grupp 6 |
-| Uppsala | Grupp 7 |
-| Västerås | Grupp 8 |
-| Örebro | Grupp 9 |
-| Gävle | Grupp 10 |
-| Sundsvall | Grupp 11 |
-| Östersund | Grupp 12 |
-| Umeå | Grupp 13 |
+| Göteborg | Grupp 3 |
+| Borås | Grupp 4 |
+| Trollhättan | Grupp 5 |
+| Karlstad | Grupp 6 |
+| Jönköping | Grupp 7 |
+| Växjö | Grupp 8 |
+| Kalmar | Grupp 9 |
+| Skövde | Grupp 10 |
+| Linköping | Grupp 11 |
+| Norrköping | Grupp 12 |
+| Stockholm | Grupp 13 |
+| Uppsala | Grupp 14 |
+| Västerås | Grupp 15 |
+| Örebro | Grupp 16 |
+| Falun | Grupp 17 |
+| Gävle | Grupp 18 |
+| Härnösand | Grupp 19 |
+| Sundsvall | Grupp 20 |
+| Östersund | Grupp 21 |
+| Umeå | Grupp 22 |
+| Luleå | Grupp 23 |
 
 ---
 
