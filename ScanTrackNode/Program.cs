@@ -17,6 +17,7 @@ builder.Services.AddSingleton(new DijkstraService(graph));
 
 builder.Services.AddSingleton<NodeRegistry>();
 builder.Services.AddSingleton<PackageForwarder>();
+builder.Services.AddHostedService<HeartbeatService>();
 
 var app = builder.Build();
 
