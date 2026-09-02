@@ -33,6 +33,35 @@ public class PackageForwarder
     public async Task<bool> ForwardAsync(Package package, string nextCity)
     {
         // TODO: implementera vidarebefordran
-        throw new NotImplementedException("Implementera ForwardAsync — se kommentarerna ovan");
+        var nodes = await _registry.GetNodesAsync();
+
+        if (!nodes.TryGetValue(nextCity, out var url))
+        {
+            _logger.LogError("Kan inte vidarebefordra: {City} finns inte i nodregistret.", nextCity);
+
+            return false;
+        }
+
+        var json = JsonSerializer.Serialize(package);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var client = _factory.CreateClient();
+
+        try
+        {
+            var res = await client.PostAsync($"{url}/paket", content);
+
+            _logger.LogInformation("Skickade paket {Id} till {City}: {URL} – statuskod {Status}", package.PackageId, nextCity, url, res.StatusCode);
+
+            return res.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+
+            _logger.LogError(ex, "Fel vid vidarebefordran av {Id} till {City}", package.PackageId, nextCity);
+            return false;
+        }
+
+        // throw new NotImplementedException("Implementera ForwardAsync — se kommentarerna ovan");
     }
 }
